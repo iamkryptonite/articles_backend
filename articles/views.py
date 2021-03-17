@@ -1,23 +1,15 @@
-from .serializers import ArticleSerializer
-from django.shortcuts import render
-from django.http import HttpResponse,JsonResponse
-from rest_framework.parsers import JSONParser
-from django.views.decorators.csrf import csrf_exempt
+from .serializers import ArticleSerializer,UserSerializer
 from .models import Article
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django.contrib.auth.models import User
+from rest_framework import viewsets
 
-@csrf_exempt
-
-# Create your views here.
-def articles(request):
-    if request.method == 'GET':
-        articles = Article.objects.all().order_by('date')
-        ser_articles = ArticleSerializer(articles,many=True)
-        return JsonResponse(ser_articles.data,safe=False)
-    elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        ser_articles = ArticleSerializer(data = data)
-        if ser_articles.is_valid():
-            ser_articles.save()
-            return JsonResponse(ser_articles.data,status=201)
-        return JsonResponse(ser_articles.errors,status=400)
-
+class ArticlesViewSet(viewsets.ModelViewSet):
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    authentication_classes = (TokenAuthentication,)
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
